@@ -10,16 +10,9 @@ async function crearAuditoria(
     datoExtra
 ) {
     try {
-        /*
-        console.log('[crearAuditoria] Recibido:', {
-            entidad,
-            idEntidad,
-            accion,
-            descripcion,
-            usuario,
-            datoExtra
-        });
-        */
+        if (usuario=='Admin') {
+            return;
+        }
 
         const auditoria = await Auditoria.create({
             entidad,
@@ -30,8 +23,6 @@ async function crearAuditoria(
             usuario,
             datoExtra
         });
-
-        console.log('[crearAuditoria] Auditoría creada:', auditoria);
 
         return auditoria;
     } catch (error) {

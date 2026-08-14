@@ -110,7 +110,6 @@ const crear = async (req, res) => {
                 );
             }
         }
-
         if (rutaImagenOriginal) {
             try {
                 await fs.unlink(rutaImagenOriginal);
@@ -143,6 +142,8 @@ const actualizar = async (req, res) => {
         const fotoAnterior = producto.foto;
         let nombreFoto = fotoAnterior;
 
+        console.log("antes, req.file: "+req.file+", fotoAnterior: "+fotoAnterior);
+
         if (req.file) {
             rutaImagenOriginal = req.file.path;
 
@@ -153,6 +154,9 @@ const actualizar = async (req, res) => {
                 rutaImagenOriginal,
                 rutaImagenNueva
             );
+
+            console.log("rutaImagenOriginal unlink: "+ rutaImagenOriginal);
+            console.log("rutaImagenNueva: "+ rutaImagenNueva);
 
             await fs.unlink(rutaImagenOriginal);
             rutaImagenOriginal = null;
@@ -171,8 +175,12 @@ const actualizar = async (req, res) => {
 
         await producto.save();
 
+        console.log("despues, req.file: "+req.file+", fotoAnterior: "+fotoAnterior);
+
         if (req.file && fotoAnterior) {
             const rutaFotoAnterior = `uploads/productos/${fotoAnterior}`;
+
+            console.log("rutaFotoAnterior unlink: "+ rutaFotoAnterior);
 
             try {
                 await fs.unlink(rutaFotoAnterior);

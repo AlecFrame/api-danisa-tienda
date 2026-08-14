@@ -12,6 +12,21 @@ const listar = async (req, res) => {
     }
 };
 
+const listar10Recientes = async (req, res) => {
+    try {
+        const auditorias = await Auditoria.findAll({
+            limit: 10,
+            order: [['fecha', 'DESC']]
+        });
+
+        res.json(auditorias);
+    } catch (error) {
+        res.status(500).json({
+            error: error.message
+        });
+    }
+};
+
 const obtener = async (req, res) => {
     try {
         const auditoria = await Auditoria.findByPk(
@@ -126,6 +141,7 @@ const filtrar = async (req, res) => {
 
 module.exports = {
     listar,
+    listar10Recientes,
     obtener,
     actualizar,
     crear,
