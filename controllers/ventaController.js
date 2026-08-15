@@ -99,7 +99,6 @@ const crear = async (req, res) => {
 
         // Crear detalles
         for (const detalle of detalles) {
-
             const producto = await Producto.findByPk(
                 detalle.idProducto,
                 { transaction }
@@ -119,7 +118,8 @@ const crear = async (req, res) => {
 
             const precioUnitario = producto.precio;
             montoTotalReal += detalle.subtotal;
-            ganancia += detalle.subtotal - producto.costoCompra;
+            let cantidadCalculada = (producto.unidad=='Gramo')? detalle.cantidad/1000:detalle.cantidad;
+            ganancia += detalle.subtotal - (cantidadCalculada * producto.costoCompra);
 
             await CarritoDetalle.create({
                 idCarrito: carrito.idCarrito,
@@ -310,21 +310,13 @@ const filtrar = async (req, res) => {
 
 const obtenerReporte = async (req, res) => {
     try {
-        console.log("Si funciona solo no encuentra la venta");
-
         const { fechaDesde, fechaHasta } = req.query;
         
         const where = {};
-        
-        const whereEstadoFecha = {};
 
         if (fechaDesde && fechaHasta) {
+            where.estado = 1,
             where.fecha = {
-                [Op.gte]: `${fechaDesde} 00:00:00`,
-                [Op.lt]: `${fechaHasta} 00:00:00`
-            };
-            whereEstadoFecha.estado = 1;
-            whereEstadoFecha.fecha = {
                 [Op.gte]: `${fechaDesde} 00:00:00`,
                 [Op.lt]: `${fechaHasta} 00:00:00`
             };
@@ -337,22 +329,14 @@ const obtenerReporte = async (req, res) => {
                     as: 'carrito'
                 }
             ],
-            whereEstadoFecha
+            where
         }) ?? 0;
 
-        console.log("totalVentas: "+totalVentas);
+        const totalGastos = await Gasto.sum('monto', { where }) ?? 0;
 
-        const totalGastos = await Gasto.sum('monto', { whereEstadoFecha }) ?? 0;
+        const ganancia = await Venta.sum('ganancia', { where }) ?? 0;
 
-        console.log("totalGastos: "+totalGastos);
-
-        const ganancia = await Venta.sum('ganancia', { whereEstadoFecha }) ?? 0;
-
-        console.log("ganancia: "+ganancia);
-
-        const cantidadVentas = await Venta.count({ whereEstadoFecha });
-
-        console.log("cantidadVentas: "+cantidadVentas);
+        const cantidadVentas = await Venta.count({ where });
 
         const productosMasVendidos = await CarritoDetalle.findAll({
             attributes: [
@@ -379,7 +363,7 @@ const obtenerReporte = async (req, res) => {
                             model: Venta,
                             as: 'venta',
                             required: true,
-                            whereEstadoFecha
+                            where
                         }
                     ]
                 }
@@ -388,7 +372,19 @@ const obtenerReporte = async (req, res) => {
             order: [[sequelize.literal('cantidadVendida'), 'DESC']]
         });
 
-        console.log("productosMasVendidos: "+productosMasVendidos);
+        productosMasVendidos.forEach(item => {
+            if (item.producto.unidad === 'Gramo') {
+                item.setDataValue(
+                    'cantidadVendida',
+                    Number(item.get('cantidadVendida')) / 1000
+                );
+            }
+        });
+
+        productosMasVendidos.sort((a, b) => {
+            return Number(b.get('cantidadVendida')) -
+                Number(a.get('cantidadVendida'));
+        });
 
         const reporte = {
             resumen: {
@@ -399,8 +395,6 @@ const obtenerReporte = async (req, res) => {
             },
             productosMasVendidos // Lista de Producto y numero de ventas del mismo ordenado de menor a mayor
         };
-
-        console.log("reporte: "+reporte);
 
         res.json(reporte);
     } catch (error) {
