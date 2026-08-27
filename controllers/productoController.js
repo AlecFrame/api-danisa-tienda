@@ -90,14 +90,12 @@ const crear = async (req, res) => {
             estado: 1
         });
 
-        const usuario = req.body.usuario;
-
         await crearAuditoria(
+            req,
             'Producto',
             producto.idProducto,
             'CREAR',
-            `Se creó "${producto.nombre}"`,
-            usuario? usuario:'Desconocido'
+            `Se creó "${producto.nombre}"`
         );
 
         res.status(201).json(producto);
@@ -172,6 +170,14 @@ const actualizar = async (req, res) => {
 
         await producto.save();
 
+        await crearAuditoria(
+            req,
+            'Producto',
+            producto.idProducto,
+            'MODIFICAR',
+            'Se hicieron cambios en el producto'
+        );
+
         if (req.file && fotoAnterior) {
             const rutaFotoAnterior = `uploads/productos/${fotoAnterior}`;
 
@@ -231,14 +237,12 @@ const desactivar = async (req, res) => {
 
         await producto.save();
 
-        const usuario = req.body.usuario? req.body.usuario:'Desconocido';
-
         await crearAuditoria(
+            req,
             'Producto',
             producto.idProducto,
             'DESACTIVAR',
-            `Se desactivó "${producto.nombre}"`,
-            usuario
+            `Se desactivó "${producto.nombre}"`
         );
 
         res.json({
@@ -267,14 +271,12 @@ const activar = async (req, res) => {
 
         await producto.save();
 
-        const usuario = req.body.usuario? req.body.usuario:'Desconocido';
-
         await crearAuditoria(
+            req,
             'Producto',
             producto.idProducto,
             'ACTIVAR',
-            `Se activó "${producto.nombre}"`,
-            usuario
+            `Se activó "${producto.nombre}"`
         );
 
         res.json({
@@ -342,6 +344,76 @@ const filtrar = async (req, res) => {
     }
 };
 
+const filtrarPaginado = async (req, res) => {
+    try {
+        const {
+            nombre,
+            idCategoria,
+            estado,
+            ordenStock,
+            pagina = 1,
+            limite = 20
+        } = req.query;
+
+        const where = {};
+        const order = [];
+
+        if (nombre) {
+            where.nombre = {
+                [Op.like]: `%${nombre}%`
+            };
+        }
+
+        if (idCategoria) {
+            where.idCategoria = Number(idCategoria);
+        }
+
+        if (estado !== undefined) {
+            where.estado = Number(estado);
+        }
+
+        if (ordenStock) {
+            order.push([
+                'stock',
+                ordenStock.toUpperCase() === 'DESC'
+                    ? 'DESC'
+                    : 'ASC'
+            ]);
+        }
+
+        const paginaNumero = Number(pagina);
+        const limiteNumero = Number(limite);
+
+        const offset = (paginaNumero - 1) * limiteNumero;
+
+        const resultado = await Producto.findAndCountAll({
+            where,
+            order,
+            limit: limiteNumero,
+            offset,
+            include: [
+                {
+                    model: Categoria,
+                    as: 'categoria'
+                }
+            ]
+        });
+
+        res.json({
+            productos: resultado.rows,
+            total: resultado.count,
+            pagina: paginaNumero,
+            limite: limiteNumero,
+            totalPaginas: Math.ceil(resultado.count / limiteNumero)
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            error: error.message
+        });
+    }
+};
+
 const listarStockBajos = async (req, res) => {
     try {
         const productos = await Producto.findAll(
@@ -371,6 +443,53 @@ const listarStockBajos = async (req, res) => {
     }
 };
 
+const eliminarFoto = async (req, res) => {
+    try {
+        const producto = await Producto.findByPk(req.params.id);
+
+        if (!producto) {
+            return res.status(404).json({
+                mensaje: 'Producto no encontrado'
+            });
+        }
+
+        if (!producto.foto) {
+            return res.status(400).json({
+                mensaje: 'El producto no tiene una imagen'
+            });
+        }
+
+        const rutaFoto = `uploads/productos/${producto.foto}`;
+
+        try {
+            await fs.unlink(rutaFoto);
+        } catch (errorImagen) {
+            console.error(
+                'No se pudo eliminar la imagen:',
+                errorImagen.message
+            );
+        }
+
+        producto.foto = null;
+
+        await producto.save();
+
+        await crearAuditoria(
+            req,
+            'Producto',
+            producto.idProducto,
+            'MODIFICAR',
+            'Se eliminó la imagen del producto'
+        );
+
+        res.json(producto);
+    } catch (error) {
+        res.status(500).json({
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
     listar,
     obtener,
@@ -379,5 +498,7 @@ module.exports = {
     desactivar,
     activar,
     filtrar,
-    listarStockBajos
+    filtrarPaginado,
+    listarStockBajos,
+    eliminarFoto
 };

@@ -22,8 +22,8 @@ const Auditoria = sequelize.define('Auditoria', {
     fecha: {
         type: DataTypes.DATE
     },
-    usuario: {
-        type: DataTypes.STRING
+    idUsuario: {
+        type: DataTypes.INTEGER
     },
     datoExtra: {
         type: DataTypes.STRING

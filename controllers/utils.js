@@ -1,16 +1,33 @@
 const Auditoria = require('../models/Auditoria');
+const Usuario = require('../models/Usuario');
 const os = require('os');
 
 async function crearAuditoria(
+    req,
     entidad,
     idEntidad,
     accion,
     descripcion,
-    usuario,
     datoExtra
 ) {
     try {
-        if (usuario=='Admin') {
+        const idUsuario = req.user.idUsuario;
+
+        if (!idUsuario) {
+            console.error('[crearAuditoria] ERROR USUARIO NO ENCONTRADO ID:', idUsuario);
+            return;
+        }
+
+        const usuario = await Usuario.findByPk(
+            idUsuario
+        )
+
+        if (!usuario) {
+            console.error('[crearAuditoria] ERROR USUARIO NO ENCONTRADO USUARIO:', usuario);
+            return;
+        }
+
+        if (usuario.rol=='admin') {
             return;
         }
 
@@ -20,7 +37,7 @@ async function crearAuditoria(
             accion,
             descripcion,
             fecha: new Date(),
-            usuario,
+            idUsuario,
             datoExtra
         });
 

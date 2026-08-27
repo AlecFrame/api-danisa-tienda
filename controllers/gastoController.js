@@ -86,14 +86,12 @@ const crear = async (req, res) => {
             estado: 1
         });
 
-        const usuario = req.body.usuario;
-
         await crearAuditoria(
+            req,
             'Gasto',
             gasto.idGasto,
             'CREAR',
-            `Se creó un gasto de "${gasto.categoria}"`,
-            usuario? usuario:'Desconocido'
+            `Se creó un gasto de "${gasto.categoria}"`
         );
 
         res.status(201).json(gasto);
@@ -126,7 +124,6 @@ const actualizar = async (req, res) => {
             pagado: req.body.pagado
         });
 
-        const usuario = req.body.usuario? req.body.usuario:'Desconocido';
         const cambios = [];
         for (const key in req.body) {
             if (req.body.hasOwnProperty(key) && key!='usuario' && valoresAnteriores[key] !== req.body[key]) {
@@ -136,11 +133,11 @@ const actualizar = async (req, res) => {
         const descripcionAuditoria = `Cambios: ${cambios.join(', ')}`;
 
         await crearAuditoria(
+            req,
             'Gasto',
             gasto.idGasto,
             'MODIFICAR',
-            descripcionAuditoria,
-            usuario
+            descripcionAuditoria
         );
 
         res.json(gasto);
@@ -167,14 +164,12 @@ const desactivar = async (req, res) => {
 
         await gasto.save();
 
-        const usuario = req.body.usuario? req.body.usuario:'Desconocido';
-
         await crearAuditoria(
+            req,
             'Gasto',
             gasto.idGasto,
             'DESACTIVAR',
-            `Se desactivó el gasto de "${gasto.categoria}"`,
-            usuario
+            `Se desactivó el gasto de "${gasto.categoria}"`
         );
 
         res.json({
@@ -203,14 +198,12 @@ const activar = async (req, res) => {
 
         await gasto.save();
 
-        const usuario = req.body.usuario? req.body.usuario:'Desconocido';
-
         await crearAuditoria(
+            req,
             'Gasto',
             gasto.idGasto,
             'ACTIVAR',
-            `Se activó el gasto de "${gasto.categoria}"`,
-            usuario
+            `Se activó el gasto de "${gasto.categoria}"`
         );
 
         res.json({

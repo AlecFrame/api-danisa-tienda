@@ -6,6 +6,8 @@ const Carrito = require('./Carrito');
 const CarritoDetalle = require('./CarritoDetalle');
 const Venta = require('./Venta');
 const Alias = require('./Alias');
+const Usuario = require('./Usuario');
+const Auditoria = require('./Auditoria');
 
 // Carrito - CarritoDetalle
 Carrito.hasMany(CarritoDetalle, {
@@ -66,6 +68,17 @@ Venta.belongsTo(Alias, {
     as: 'alias'
 });
 
+// Auditoria - Usuario
+Usuario.hasMany(Auditoria, {
+    foreignKey: 'idUsuario',
+    as: 'auditorias'
+});
+
+Auditoria.belongsTo(Usuario, {
+    foreignKey: 'idUsuario',
+    as: 'usuario'
+});
+
 // Exportar
 module.exports = {
     Producto,
@@ -73,5 +86,7 @@ module.exports = {
     Carrito,
     CarritoDetalle,
     Venta,
-    Alias
+    Alias,
+    Usuario,
+    Auditoria
 };

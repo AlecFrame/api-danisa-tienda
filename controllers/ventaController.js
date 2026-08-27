@@ -155,14 +155,12 @@ const crear = async (req, res) => {
             transaction
         });
 
-        const usuario = req.body.usuario;
-
         await crearAuditoria(
+            req,
             'Venta',
             venta.idVenta,
             'CREAR',
-            `Se registró la venta #${venta.idVenta} por $${montoTotal} pesos`,
-            usuario? usuario:'Desconocido'
+            `Se registró la venta #${venta.idVenta} por $${montoTotal} pesos`
         );
 
         await transaction.commit();
@@ -197,14 +195,12 @@ const desactivar = async (req, res) => {
 
         await venta.save();
 
-        const usuario = req.body.usuario? req.body.usuario:'Desconocido';
-
         await crearAuditoria(
+            req,
             'Venta',
             venta.idVenta,
             'DESACTIVAR',
-            `Se desactivó la venta #${venta.idVenta}`,
-            usuario
+            `Se desactivó la venta #${venta.idVenta}`
         );
 
         res.json({
@@ -233,14 +229,12 @@ const activar = async (req, res) => {
 
         await venta.save();
 
-        const usuario = req.body.usuario? req.body.usuario:'Desconocido';
-
         await crearAuditoria(
+            req,
             'Venta',
             venta.idVenta,
             'ACTIVAR',
-            `Se activó la venta #${venta.idVenta}`,
-            usuario
+            `Se activó la venta #${venta.idVenta}`
         );
 
         res.json({

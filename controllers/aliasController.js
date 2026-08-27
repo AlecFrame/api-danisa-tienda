@@ -56,14 +56,12 @@ const crear = async (req, res) => {
             estado: 1
         });
 
-        const usuario = req.body.usuario;
-
         await crearAuditoria(
+            req,
             'Alias',
             alias.idAlias,
             'CREAR',
-            `Se creó "${alias.valor}"`,
-            usuario? usuario:'Desconocido'
+            `Se creó "${alias.valor}"`
         );
 
         res.status(201).json(alias);
@@ -93,7 +91,6 @@ const actualizar = async (req, res) => {
             propietario: req.body.propietario
         });
 
-        const usuario = req.body.usuario? req.body.usuario:'Desconocido';
         const cambios = [];
         for (const key in req.body) {
             if (req.body.hasOwnProperty(key) && key!='usuario' && valoresAnteriores[key] !== req.body[key]) {
@@ -103,11 +100,11 @@ const actualizar = async (req, res) => {
         const descripcionAuditoria = `Cambios: ${cambios.join(', ')}`;
 
         await crearAuditoria(
+            req,
             'Alias',
             alias.idAlias,
             'MODIFICAR',
-            descripcionAuditoria,
-            usuario
+            descripcionAuditoria
         );
 
         res.json(alias);
@@ -134,14 +131,12 @@ const desactivar = async (req, res) => {
 
         await alias.save();
 
-        const usuario = req.body.usuario? req.body.usuario:'Desconocido';
-
         await crearAuditoria(
+            req,
             'Alias',
             alias.idAlias,
             'DESACTIVAR',
-            `Se desactivó "${alias.valor}"`,
-            usuario
+            `Se desactivó "${alias.valor}"`
         );
 
         res.json({
@@ -170,14 +165,12 @@ const activar = async (req, res) => {
 
         await alias.save();
 
-        const usuario = req.body.usuario? req.body.usuario:'Desconocido';
-
         await crearAuditoria(
+            req,
             'Alias',
             alias.idAlias,
             'ACTIVAR',
-            `Se activó "${alias.valor}"`,
-            usuario
+            `Se activó "${alias.valor}"`
         );
 
         res.json({

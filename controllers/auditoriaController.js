@@ -1,9 +1,17 @@
 const { Op } = require('sequelize');
 const Auditoria = require('../models/Auditoria');
+const Usuario = require('../models/Usuario');
 
 const listar = async (req, res) => {
     try {
-        const auditorias = await Auditoria.findAll();
+        const auditorias = await Auditoria.findAll({
+            include: [
+                {
+                    model: Usuario,
+                    as: 'usuario'
+                }
+            ]
+        });
         res.json(auditorias);
     } catch (error) {
         res.status(500).json({
@@ -15,6 +23,12 @@ const listar = async (req, res) => {
 const listar10Recientes = async (req, res) => {
     try {
         const auditorias = await Auditoria.findAll({
+            include: [
+                {
+                    model: Usuario,
+                    as: 'usuario'
+                }
+            ],
             limit: 10,
             order: [['fecha', 'DESC']]
         });
@@ -38,48 +52,6 @@ const obtener = async (req, res) => {
             });
         }
 
-        res.json(auditoria);
-    } catch (error) {
-        res.status(500).json({
-            error: error.message
-        });
-    }
-};
-
-const crear = async (req, res) => {
-    try {
-        const auditoria = await Auditoria.create({
-            entidad: req.body.entidad,
-            idEntidad: req.body.idEntidad,
-            accion: req.body.accion,
-            descripcion: req.body.descripcion,
-            fecha: req.body.fecha
-        });
-        res.status(201).json(auditoria);
-    } catch (error) {
-        res.status(500).json({
-            error: error.message
-        });
-    }
-};
-
-const actualizar = async (req, res) => {
-    try {
-        const auditoria = await Auditoria.findByPk(
-            req.params.id
-        );
-        if (!auditoria) {
-            return res.status(404).json({
-                mensaje: 'Auditoria no encontrado'
-            });
-        }
-        await auditoria.update({
-            entidad: req.body.entidad,
-            idEntidad: req.body.idEntidad,
-            accion: req.body.accion,
-            descripcion: req.body.descripcion,
-            fecha: req.body.fecha
-        });
         res.json(auditoria);
     } catch (error) {
         res.status(500).json({
@@ -126,6 +98,12 @@ const filtrar = async (req, res) => {
         }
 
         const auditorias = await Auditoria.findAll({
+            include: [
+                {
+                    model: Usuario,
+                    as: 'usuario'
+                }
+            ],
             where,
             order: [['fecha', 'DESC']]
         });
@@ -143,7 +121,5 @@ module.exports = {
     listar,
     listar10Recientes,
     obtener,
-    actualizar,
-    crear,
     filtrar
 };
