@@ -3,6 +3,7 @@ const router = express.Router();
 
 const {
     filtrar,
+    filtrarPaginado,
     obtener,
     crear,
     desactivar,
@@ -13,6 +14,7 @@ const {
 } = require('../controllers/ventaController');
 
 router.get('/', filtrar);
+router.get('/paginado/', filtrarPaginado);
 router.get('/resumen', obtenerVentasRecientes);
 router.get('/reporte', obtenerReporte);
 router.get('/detalles/:idCarrito', obtenerDetallesDeCarrito);

@@ -216,11 +216,79 @@ const activar = async (req, res) => {
     }
 };
 
+const filtrarPaginado = async (req, res) => {
+    try {
+        const {
+            descripcion,
+            categoria,
+            pagado,
+            estado,
+            fechaDesde,
+            fechaHasta,
+            pagina = 1,
+            limite = 20
+        } = req.query;
+
+        const where = {};
+
+        if (descripcion) {
+            where.descripcion = {
+                [Op.like]: `%${descripcion}%`
+            };
+        }
+        if (categoria) {
+            where.categoria = {
+                [Op.like]: `%${categoria}%`
+            };
+        }
+        if (pagado) {
+            where.pagado = {
+                [Op.like]: `%${pagado}%`
+            };
+        }
+
+        if (estado !== undefined) {
+            where.estado = Number(estado);
+        }
+
+        if (fechaDesde && fechaHasta) {
+            where.fecha = {
+                [Op.gte]: `${fechaDesde} 00:00:00`,
+                [Op.lt]: `${fechaHasta} 00:00:00`
+            };
+        }
+
+        const paginaNumero = Number(pagina);
+        const limiteNumero = Number(limite);
+
+        const offset = (paginaNumero - 1) * limiteNumero;
+
+        const resultado = await Gasto.findAndCountAll({
+            where,
+            limit: limiteNumero,
+            offset
+        });
+
+        res.json({
+            gastos: resultado.rows,
+            total: resultado.count,
+            pagina: paginaNumero,
+            limite: limiteNumero,
+            totalPaginas: Math.ceil(resultado.count / limiteNumero)
+        });
+    } catch (error) {
+        res.status(500).json({
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
     filtrar,
     obtener,
     crear,
     actualizar,
     desactivar,
-    activar
+    activar,
+    filtrarPaginado
 };

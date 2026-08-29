@@ -170,7 +170,6 @@ const crear = async (req, res) => {
             venta
         });
     } catch (error) {
-
         await transaction.rollback();
 
         res.status(500).json({
@@ -295,6 +294,76 @@ const filtrar = async (req, res) => {
 
         res.json(ventas);
 
+    } catch (error) {
+        res.status(500).json({
+            error: error.message
+        });
+    }
+};
+
+const filtrarPaginado = async (req, res) => {
+    try {
+        const {
+            tipoPago,
+            idAlias,
+            estado,
+            fechaDesde,
+            fechaHasta,
+            pagina = 1,
+            limite = 20
+        } = req.query;
+
+        const where = {};
+
+        if (tipoPago) {
+            where.tipoPago = {
+                [Op.like]: `%${tipoPago}%`
+            };
+        }
+
+        if (idAlias) {
+            where.idAlias = Number(idAlias);
+        }
+
+        if (estado !== undefined) {
+            where.estado = Number(estado);
+        }
+
+        if (fechaDesde && fechaHasta) {
+            where.fecha = {
+                [Op.gte]: `${fechaDesde} 00:00:00`,
+                [Op.lt]: `${fechaHasta} 00:00:00`
+            };
+        }
+
+        const paginaNumero = Number(pagina);
+        const limiteNumero = Number(limite);
+
+        const offset = (paginaNumero - 1) * limiteNumero;
+
+        const resultado = await Venta.findAndCountAll({
+            where,
+            limit: limiteNumero,
+            offset,
+            order: [['fecha', 'DESC']],
+            include: [
+                {
+                    model: Carrito,
+                    as: 'carrito'
+                },{
+                    model: Alias,
+                    as: 'alias'
+                }
+            ]
+        });
+
+        res.json({
+            ventas: resultado.rows,
+            total: resultado.count,
+            pagina: paginaNumero,
+            limite: limiteNumero,
+            totalPaginas: Math.ceil(resultado.count / limiteNumero)
+        });
     } catch (error) {
         res.status(500).json({
             error: error.message
@@ -494,6 +563,7 @@ module.exports = {
     desactivar,
     activar,
     filtrar,
+    filtrarPaginado,
     obtenerReporte,
     obtenerVentasRecientes,
     obtenerDetallesDeCarrito

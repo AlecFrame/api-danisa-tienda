@@ -44,7 +44,15 @@ const listar10Recientes = async (req, res) => {
 const obtener = async (req, res) => {
     try {
         const auditoria = await Auditoria.findByPk(
-            req.params.id
+            req.params.id,
+            {
+                include: [
+                    {
+                        model: Usuario,
+                        as: 'usuario'
+                    }
+                ]
+            }
         );
         if (!auditoria) {
             return res.status(404).json({
@@ -117,9 +125,86 @@ const filtrar = async (req, res) => {
     }
 };
 
+const filtrarPaginado = async (req, res) => {
+    try {
+        const {
+            entidad,
+            accion,
+            fechaDesde,
+            fechaHasta,
+            usuario,
+            pagina = 1,
+            limite = 20
+        } = req.query;
+
+        const where = {};
+
+        if (entidad) {
+            where.entidad = {
+                [Op.like]: `%${entidad}%`
+            };
+        }
+
+        if (accion) {
+            where.accion = {
+                [Op.like]: `%${accion}%`
+            };
+        }
+
+        if (usuario) {
+            where.usuario = {
+                [Op.like]: `%${usuario}%`
+            };
+        }
+
+        if (fechaDesde && fechaHasta) {
+            where.fecha = {
+                [Op.gte]: `${fechaDesde} 00:00:00`,
+                [Op.lt]: `${fechaHasta} 00:00:00`
+            };
+        }
+
+        const paginaNumero = Number(pagina);
+        const limiteNumero = Number(limite);
+
+        console.log("limite: "+limite)
+        console.log("limiteNumero: "+limiteNumero)
+
+        const offset = (paginaNumero - 1) * limiteNumero;
+
+        console.log("offset: "+offset)
+
+        const resultado = await Auditoria.findAndCountAll({
+            include: [
+                {
+                    model: Usuario,
+                    as: 'usuario'
+                }
+            ],
+            where,
+            offset,
+            limit: limiteNumero,
+            order: [['fecha', 'DESC']]
+        });
+
+        res.json({
+            registros: resultado.rows,
+            total: resultado.count,
+            pagina: paginaNumero,
+            limite: limiteNumero,
+            totalPaginas: Math.ceil(resultado.count / limiteNumero)
+        });
+    } catch (error) {
+        res.status(500).json({
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
     listar,
     listar10Recientes,
     obtener,
-    filtrar
+    filtrar,
+    filtrarPaginado
 };

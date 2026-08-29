@@ -183,11 +183,60 @@ const activar = async (req, res) => {
     }
 };
 
+const filtrarPaginado = async (req, res) => {
+    try {
+        const {
+            propietario,
+            estado,
+            pagina = 1,
+            limite = 20
+        } = req.query;
+
+        const where = {};
+        const order = [];
+
+        if (propietario) {
+            where.propietario = {
+                [Op.like]: `%${propietario}%`
+            };
+        }
+
+        if (estado !== undefined) {
+            where.estado = Number(estado);
+        }
+
+        const paginaNumero = Number(pagina);
+        const limiteNumero = Number(limite);
+
+        const offset = (paginaNumero - 1) * limiteNumero;
+
+        const resultado = await Alias.findAndCountAll({
+            where,
+            order,
+            limit: limiteNumero,
+            offset
+        });
+
+        res.json({
+            aliasList: resultado.rows,
+            total: resultado.count,
+            pagina: paginaNumero,
+            limite: limiteNumero,
+            totalPaginas: Math.ceil(resultado.count / limiteNumero)
+        });
+    } catch (error) {
+        res.status(500).json({
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
     filtrar,
     obtener,
     crear,
     actualizar,
     desactivar,
-    activar
+    activar,
+    filtrarPaginado
 };

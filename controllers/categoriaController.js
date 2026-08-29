@@ -29,7 +29,6 @@ const filtrar = async (req, res) => {
         });
 
         res.json(categorias);
-
     } catch (error) {
         res.status(500).json({
             error: error.message
@@ -271,7 +270,6 @@ const filtrarPaginado = async (req, res) => {
         } = req.query;
 
         const where = {};
-        const order = [];
 
         if (nombre) {
             where.nombre = {
@@ -290,7 +288,6 @@ const filtrarPaginado = async (req, res) => {
 
         const resultado = await Categoria.findAndCountAll({
             where,
-            order,
             limit: limiteNumero,
             offset
         });
